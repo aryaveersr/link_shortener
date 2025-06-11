@@ -1,7 +1,12 @@
 mod health_check;
+mod links;
 
 use axum::{Router, routing::get};
 
-pub fn routes() -> Router {
-    Router::new().route("/health_check", get(health_check::handler))
+use crate::AppState;
+
+pub fn routes() -> Router<AppState> {
+    Router::new()
+        .route("/health_check", get(health_check::handler))
+        .nest("/links", links::routes())
 }

@@ -1,1 +1,4 @@
 /target
+
+# SQLite Database
+database.db*
