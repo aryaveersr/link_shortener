@@ -3,6 +3,9 @@ use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use url::Url;
 
+// The integration tests use `UrlHelper` to figure out the URL they need to send requests at,
+// since the test server runs on whatever port is available (assigned by the OS).
+
 pub struct UrlHelper {
     base: Url,
 }
@@ -28,6 +31,7 @@ pub async fn spawn_server(pool: Pool<Sqlite>) -> anyhow::Result<UrlHelper> {
     let router = link_shortener::init(pool).await?;
 
     // Create listener
+    // Using `0` as the port means we leave it up to the OS to assign us any available port.
     let listener = TcpListener::bind("localhost:0").await.unwrap();
     let addr = listener.local_addr()?;
 

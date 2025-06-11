@@ -1,3 +1,5 @@
+//! POST /api/links/create
+
 use crate::{
     AppState,
     domain::{Href, LinkEntry, Slug},
@@ -32,7 +34,7 @@ impl TryFrom<RequestData> for LinkEntry {
 }
 
 #[derive(thiserror::Error, Debug)]
-pub enum CreateError {
+pub enum ResponseError {
     #[error("{0}")]
     ValidationError(String),
 
@@ -43,11 +45,11 @@ pub enum CreateError {
     UnexpectedError(#[from] anyhow::Error),
 }
 
-impl IntoResponse for CreateError {
+impl IntoResponse for ResponseError {
     fn into_response(self) -> Response<Body> {
         match self {
-            CreateError::ValidationError(_) | CreateError::AlreadyExists => StatusCode::BAD_REQUEST,
-            CreateError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::ValidationError(_) | Self::AlreadyExists => StatusCode::BAD_REQUEST,
+            Self::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
         .into_response()
     }
@@ -56,18 +58,18 @@ impl IntoResponse for CreateError {
 pub async fn handler(
     State(AppState { pool }): State<AppState>,
     Json(request_data): Json<RequestData>,
-) -> Result<StatusCode, CreateError> {
+) -> Result<StatusCode, ResponseError> {
     // Parse incoming request data.
     let link_entry: LinkEntry = request_data
         .try_into()
-        .map_err(CreateError::ValidationError)?;
+        .map_err(ResponseError::ValidationError)?;
 
     // Check if the slug already exists in the database.
     if check_if_slug_exists(&pool, &link_entry.slug)
         .await
         .context("Failed to check for slug in database")?
     {
-        return Err(CreateError::AlreadyExists);
+        return Err(ResponseError::AlreadyExists);
     }
 
     // Insert the link entry into database.
@@ -79,9 +81,9 @@ pub async fn handler(
 }
 
 async fn check_if_slug_exists(pool: &Pool<Sqlite>, slug: &Slug) -> Result<bool, sqlx::Error> {
-    let slug_str = slug.as_ref();
+    let slug_ref = slug.as_ref();
 
-    let record = sqlx::query!("SELECT * FROM links WHERE slug = $1;", slug_str)
+    let record = sqlx::query!("SELECT * FROM links WHERE slug = $1;", slug_ref)
         .fetch_optional(pool)
         .await?;
 

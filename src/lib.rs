@@ -3,6 +3,7 @@ mod domain;
 
 use axum::{Router, routing::get};
 use sqlx::{Pool, Sqlite};
+
 #[derive(Clone)]
 pub struct AppState {
     pub pool: Pool<Sqlite>,
