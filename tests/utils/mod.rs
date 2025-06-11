@@ -1,4 +1,3 @@
-use axum::Router;
 use sqlx::{Pool, Sqlite};
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
@@ -24,10 +23,6 @@ impl TryFrom<SocketAddr> for UrlHelper {
     }
 }
 
-async fn start(listener: TcpListener, router: Router) {
-    axum::serve(listener, router).await.unwrap();
-}
-
 pub async fn spawn_server(pool: Pool<Sqlite>) -> anyhow::Result<UrlHelper> {
     // Init application
     let router = link_shortener::init(pool).await?;
@@ -37,7 +32,9 @@ pub async fn spawn_server(pool: Pool<Sqlite>) -> anyhow::Result<UrlHelper> {
     let addr = listener.local_addr()?;
 
     // Start the server
-    tokio::spawn(start(listener, router));
+    tokio::spawn(async move {
+        axum::serve(listener, router).await.unwrap();
+    });
 
     Ok(addr.try_into()?)
 }
