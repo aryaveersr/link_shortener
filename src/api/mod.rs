@@ -1,9 +1,8 @@
 mod health_check;
 mod links;
 
-use axum::{Router, routing::get};
-
 use crate::AppState;
+use axum::{Router, routing::get};
 
 pub fn routes() -> Router<AppState> {
     Router::new()

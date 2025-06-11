@@ -25,4 +25,15 @@ thiserror = "2.0"
 [dependencies.sqlx]
 version = "0.8"
 default-features = false
-features = ["tls-rustls", "runtime-tokio", "sqlite", "uuid"]
+features = [
+    "tls-rustls",
+    "runtime-tokio",
+    "sqlite",
+    "uuid",
+    "macros",
+    "migrate",
+]
+
+[dev-dependencies]
+# HTTP Client (used in integration tests)
+reqwest = "0.12.20"
