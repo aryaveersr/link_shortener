@@ -36,6 +36,9 @@ pub enum CreateError {
     #[error("{0}")]
     ValidationError(String),
 
+    #[error("Requested slug already exists")]
+    AlreadyExists,
+
     #[error(transparent)]
     UnexpectedError(#[from] anyhow::Error),
 }
@@ -43,7 +46,8 @@ pub enum CreateError {
 impl IntoResponse for CreateError {
     fn into_response(self) -> Response<Body> {
         match self {
-            CreateError::ValidationError(_) => StatusCode::BAD_REQUEST,
+            CreateError::ValidationError(_) | CreateError::AlreadyExists => StatusCode::BAD_REQUEST,
+
             CreateError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
         .into_response()
@@ -57,12 +61,30 @@ pub async fn handler(
     // Parse incoming form data.
     let link_entry: LinkEntry = form_data.try_into().map_err(CreateError::ValidationError)?;
 
+    // Check if the slug already exists in the database.
+    if check_if_slug_exists(&pool, &link_entry.slug)
+        .await
+        .context("Failed to check for slug in database")?
+    {
+        return Err(CreateError::AlreadyExists);
+    }
+
     // Insert the link entry into database.
     insert_link_entry(&pool, &link_entry)
         .await
         .context("Failed to insert the link entry")?;
 
     Ok(StatusCode::OK)
+}
+
+async fn check_if_slug_exists(pool: &Pool<Sqlite>, slug: &Slug) -> Result<bool, sqlx::Error> {
+    let slug_str = slug.as_ref();
+
+    let record = sqlx::query!("SELECT * FROM links WHERE slug = $1;", slug_str)
+        .fetch_optional(pool)
+        .await?;
+
+    Ok(record.is_some())
 }
 
 async fn insert_link_entry(pool: &Pool<Sqlite>, link_entry: &LinkEntry) -> Result<(), sqlx::Error> {
