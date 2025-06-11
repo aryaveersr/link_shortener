@@ -58,22 +58,26 @@ pub async fn handler(
     let link_entry: LinkEntry = form_data.try_into().map_err(CreateError::ValidationError)?;
 
     // Insert the link entry into database.
-    insert_link_entry(&pool, link_entry)
+    insert_link_entry(&pool, &link_entry)
         .await
         .context("Failed to insert the link entry")?;
 
     Ok(StatusCode::OK)
 }
 
-async fn insert_link_entry(pool: &Pool<Sqlite>, link_entry: LinkEntry) -> Result<(), sqlx::Error> {
-    let id = Uuid::new_v4();
+async fn insert_link_entry(pool: &Pool<Sqlite>, link_entry: &LinkEntry) -> Result<(), sqlx::Error> {
+    let id = Uuid::new_v4().to_string();
+    let slug = link_entry.slug.as_ref();
+    let href = link_entry.href.as_ref();
 
-    sqlx::query("INSERT INTO links (id, slug, href) VALUES ($1, $2, $3);")
-        .bind(id.to_string())
-        .bind(link_entry.slug.as_ref())
-        .bind(link_entry.href.as_ref())
-        .execute(pool)
-        .await?;
+    sqlx::query!(
+        "INSERT INTO links (id, slug, href) VALUES ($1, $2, $3);",
+        id,
+        slug,
+        href
+    )
+    .execute(pool)
+    .await?;
 
     Ok(())
 }
