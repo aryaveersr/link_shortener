@@ -1,8 +1,8 @@
 use axum::Router;
-use reqwest::Url;
 use sqlx::{Pool, Sqlite};
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
+use url::Url;
 
 pub struct UrlHelper {
     base: Url,

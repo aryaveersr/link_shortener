@@ -1,4 +1,5 @@
 mod api;
+mod domain;
 
 use axum::{Router, routing::get};
 use sqlx::{Pool, Sqlite};
@@ -9,7 +10,7 @@ pub struct AppState {
 
 pub async fn init(pool: Pool<Sqlite>) -> anyhow::Result<Router> {
     // Init logging
-    tracing_subscriber::fmt::init();
+    let _ = tracing_subscriber::fmt::try_init();
 
     // Build router
     let router = Router::new()

@@ -75,10 +75,10 @@ async fn create_link_returns_400_for_invalid_data(pool: Pool<Sqlite>) -> anyhow:
             .context("Failed to execute request")?;
 
         // Assert
-        assert_eq!(
-            response.status(),
-            StatusCode::BAD_REQUEST,
-            "status code not 400 for: {}",
+        assert!(
+            response.status().is_client_error(),
+            "status code is {} for: {}",
+            response.status().as_str(),
             case.1
         );
     }

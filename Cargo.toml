@@ -10,6 +10,12 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 # Web framework
 axum = "0.8"
 
+# Serde
+serde = { version = "1.0", features = ["derive"] }
+
+# URL validation
+url = "2.5"
+
 # Configuration (from .env files)
 dotenvy = "0.15"
 
@@ -20,6 +26,9 @@ tracing-subscriber = "0.3"
 # Error handling
 anyhow = "1.0"
 thiserror = "2.0"
+
+# UUID (assigning ids in database)
+uuid = { version = "1.17", features = ["v4"] }
 
 # Database
 [dependencies.sqlx]
