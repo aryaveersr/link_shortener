@@ -4,7 +4,7 @@ use crate::{
 };
 use anyhow::Context;
 use axum::{
-    Form,
+    Json,
     body::Body,
     extract::State,
     http::{Response, StatusCode},
@@ -14,16 +14,16 @@ use serde::Deserialize;
 use sqlx::{Pool, Sqlite};
 use uuid::Uuid;
 
-#[derive(Deserialize)]
-pub struct FormData {
+#[derive(Deserialize, Debug)]
+pub struct RequestData {
     slug: String,
     href: String,
 }
 
-impl TryFrom<FormData> for LinkEntry {
+impl TryFrom<RequestData> for LinkEntry {
     type Error = String;
 
-    fn try_from(value: FormData) -> Result<Self, Self::Error> {
+    fn try_from(value: RequestData) -> Result<Self, Self::Error> {
         let href = Href::parse(value.href)?;
         let slug = Slug::parse(value.slug)?;
 
@@ -47,7 +47,6 @@ impl IntoResponse for CreateError {
     fn into_response(self) -> Response<Body> {
         match self {
             CreateError::ValidationError(_) | CreateError::AlreadyExists => StatusCode::BAD_REQUEST,
-
             CreateError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
         .into_response()
@@ -56,10 +55,12 @@ impl IntoResponse for CreateError {
 
 pub async fn handler(
     State(AppState { pool }): State<AppState>,
-    Form(form_data): Form<FormData>,
+    Json(request_data): Json<RequestData>,
 ) -> Result<StatusCode, CreateError> {
-    // Parse incoming form data.
-    let link_entry: LinkEntry = form_data.try_into().map_err(CreateError::ValidationError)?;
+    // Parse incoming request data.
+    let link_entry: LinkEntry = request_data
+        .try_into()
+        .map_err(CreateError::ValidationError)?;
 
     // Check if the slug already exists in the database.
     if check_if_slug_exists(&pool, &link_entry.slug)

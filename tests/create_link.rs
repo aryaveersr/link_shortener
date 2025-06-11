@@ -1,5 +1,7 @@
 mod utils;
 
+use std::collections::HashMap;
+
 use anyhow::Context;
 use reqwest::{Client, StatusCode};
 use sqlx::{Pool, Sqlite};
@@ -14,10 +16,10 @@ async fn create_link_returns_200_for_valid_data_and_stores_it(
     // Act
     let response = Client::new()
         .post(url.path("/api/links/create")?)
-        .form(&[
+        .json(&HashMap::from([
             ("slug", "shortened-link-12"),
             ("href", "https://google.com"),
-        ])
+        ]))
         .send()
         .await
         .context("Failed to execute request")?;
@@ -44,14 +46,20 @@ async fn create_link_returns_error_for_slug_already_used(pool: Pool<Sqlite>) -> 
     // Act
     let response_a = client
         .post(url.path("/api/links/create")?)
-        .form(&[("slug", "shortened-link"), ("href", "https://google.com")])
+        .json(&HashMap::from([
+            ("slug", "shortened-link"),
+            ("href", "https://google.com"),
+        ]))
         .send()
         .await
         .context("Failed to execute request")?;
 
     let response_b = client
         .post(url.path("/api/links/create")?)
-        .form(&[("slug", "shortened-link"), ("href", "https://github.com")])
+        .json(&HashMap::from([
+            ("slug", "shortened-link"),
+            ("href", "https://github.com"),
+        ]))
         .send()
         .await
         .context("Failed to execute request")?;
@@ -74,33 +82,33 @@ async fn create_link_returns_error_for_invalid_data(pool: Pool<Sqlite>) -> anyho
     let client = Client::new();
 
     let test_cases = [
-        (vec![("slug", "")], "missing href"),
-        (vec![("href", "")], "missing slug"),
-        (vec![], "missing both href and slug"),
+        (HashMap::from([("slug", "")]), "missing href"),
+        (HashMap::from([("href", "")]), "missing slug"),
+        (HashMap::new(), "missing both href and slug"),
         (
-            vec![
-                ("slug", "shortened/link/12"),
-                ("href", "https://google.com"),
-            ],
-            "slug contains forbidden characters",
-        ),
-        (
-            vec![("slug", ""), ("href", "https://google.com")],
+            HashMap::from([("slug", ""), ("href", "https://google.com")]),
             "slug is empty",
         ),
         (
-            vec![("slug", "shortened-link-13"), ("href", "")],
+            HashMap::from([("slug", "shortened-link-13"), ("href", "")]),
             "href is empty",
         ),
         (
-            vec![("slug", ""), ("href", "")],
+            HashMap::from([("slug", ""), ("href", "")]),
             "both slug and href are empty",
         ),
         (
-            vec![
+            HashMap::from([
+                ("slug", "shortened/link/12"),
+                ("href", "https://google.com"),
+            ]),
+            "slug contains forbidden characters",
+        ),
+        (
+            HashMap::from([
                 ("slug", "shortened-link"),
                 ("href", "javascript:alert(\"Hi\")"),
-            ],
+            ]),
             "href is not a valid url",
         ),
     ];
@@ -109,7 +117,7 @@ async fn create_link_returns_error_for_invalid_data(pool: Pool<Sqlite>) -> anyho
         // Act
         let response = client
             .post(url.path("/api/links/create")?)
-            .form(&case.0)
+            .json(&case.0)
             .send()
             .await
             .context("Failed to execute request")?;
