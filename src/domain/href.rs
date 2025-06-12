@@ -4,11 +4,11 @@ use url::Url;
 pub struct Href(Url);
 
 impl Href {
-    pub fn parse(input: String) -> Result<Self, String> {
+    pub fn parse(input: &str) -> Result<Self, String> {
         // We try parsing the input as is, and if it fails, try again after
         // appending 'https://' at the start.
         let url = {
-            let parse_as_is = Url::parse(&input);
+            let parse_as_is = Url::parse(input);
 
             match parse_as_is {
                 Ok(url) => Ok(url),
@@ -52,7 +52,7 @@ mod tests {
 
         for case in test_cases {
             // Act
-            let href = Href::parse(case.to_owned());
+            let href = Href::parse(case);
 
             // Assert
             assert!(
@@ -77,7 +77,7 @@ mod tests {
 
         for case in test_cases {
             // Act
-            let href = Href::parse(case.to_owned());
+            let href = Href::parse(case);
 
             // Assert
             assert!(

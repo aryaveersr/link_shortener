@@ -26,7 +26,7 @@ impl TryFrom<RequestData> for LinkEntry {
     type Error = String;
 
     fn try_from(value: RequestData) -> Result<Self, Self::Error> {
-        let href = Href::parse(value.href)?;
+        let href = Href::parse(&value.href)?;
         let slug = Slug::parse(value.slug)?;
 
         Ok(Self { href, slug })
