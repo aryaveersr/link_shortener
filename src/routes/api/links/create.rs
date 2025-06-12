@@ -7,10 +7,9 @@ use crate::{
 use anyhow::Context;
 use axum::{
     Json,
-    body::Body,
     extract::State,
-    http::{Response, StatusCode},
-    response::IntoResponse,
+    http::StatusCode,
+    response::{IntoResponse, Response},
 };
 use serde::Deserialize;
 use sqlx::{Pool, Sqlite};
@@ -46,7 +45,7 @@ pub enum ResponseError {
 }
 
 impl IntoResponse for ResponseError {
-    fn into_response(self) -> Response<Body> {
+    fn into_response(self) -> Response {
         match self {
             Self::ValidationError(_) | Self::AlreadyExists => StatusCode::BAD_REQUEST,
             Self::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,

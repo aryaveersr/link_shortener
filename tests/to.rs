@@ -1,7 +1,7 @@
 mod utils;
 
 use anyhow::Context;
-use reqwest::{Client, StatusCode};
+use reqwest::{Client, StatusCode, redirect::Policy};
 use sqlx::{Pool, Sqlite};
 use std::collections::HashMap;
 
@@ -11,7 +11,7 @@ async fn to_redirects_to_href_for_valid_slug(pool: Pool<Sqlite>) -> anyhow::Resu
     const SLUG: &'static str = "shortened-link";
     const URL: &'static str = "https://google.com";
     let url = utils::spawn_server(pool).await?;
-    let client = Client::new();
+    let client = Client::builder().redirect(Policy::none()).build()?;
 
     // Act
     client
