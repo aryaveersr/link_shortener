@@ -21,6 +21,10 @@ impl Href {
             return Err(format!("{} is not an allowed href.", input));
         }
 
+        if url.to_string().len() > 256 {
+            return Err("Input is too long.".to_owned());
+        }
+
         Ok(Self(url))
     }
 }
@@ -87,5 +91,22 @@ mod tests {
                 href.unwrap().0
             );
         }
+    }
+
+    #[test]
+    fn href_does_not_parse_string_too_long() {
+        // Arrange
+        let string = "hello_world".repeat(40);
+
+        // Act
+        let href = Href::parse(&string);
+
+        // Assert
+        assert!(string.len() > 256);
+        assert!(
+            href.is_err(),
+            r#"Parsed string with length {}"#,
+            string.len()
+        );
     }
 }
