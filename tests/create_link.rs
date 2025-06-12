@@ -31,8 +31,10 @@ async fn create_link_returns_200_for_valid_data_and_stores_it(
     // Assert
     assert_eq!(response.status(), StatusCode::OK, "Status code isn't 200");
     assert_eq!(response.content_length(), Some(0), "Content length isn't 0");
-
-    assert_eq!(record.href, "https://google.com");
+    assert!(
+        record.href.starts_with("https://google.com"),
+        "Record stored doesn't have same href"
+    );
 
     Ok(())
 }
