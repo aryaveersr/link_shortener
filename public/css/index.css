@@ -18,13 +18,13 @@ h1 {
 form {
   display: flex;
   flex-direction: row;
-  align-items: end;
+  align-items: center;
 
   background-color: white;
   border-radius: 8px;
 
   gap: 1rem;
-  padding: 1rem;
+  padding: 1.25rem;
 }
 
 /* Label */
@@ -33,7 +33,18 @@ label {
   display: flex;
   flex-direction: column;
 
-  gap: 4px;
+  gap: 6px;
+}
+
+label p {
+  margin-left: 4px;
+}
+
+label > span {
+  opacity: 0;
+  user-select: none;
+
+  color: var(--danger);
 }
 
 /* Inputs */
@@ -54,15 +65,23 @@ input[type="url"]:hover {
   background-color: whitesmoke;
 }
 
-input[type="text"]:invalid,
-input[type="url"]:invalid {
+input[type="text"]:user-invalid,
+input[type="url"]:user-invalid {
   border-color: var(--danger);
+}
+
+input[type="text"]:user-invalid + span,
+input[type="url"]:user-invalid + span {
+  opacity: 1;
+  user-select: auto;
 }
 
 /* Buttons */
 
 button {
   cursor: pointer;
+
+  margin-top: -1px;
 
   border: 1px solid var(--primary);
   border-radius: 8px;

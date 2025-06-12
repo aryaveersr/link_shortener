@@ -21,22 +21,39 @@
     <main>
       <h1>Shorten URLs</h1>
 
-      <!-- Form for creating a new link -->
       <form>
+        <!-- Slug input -->
+        <!-- The pattern matches all alphanumeric characters, '-' and '_' -->
         <label>
-          Slug
+          <p>Slug</p>
           <input
             type="text"
-            id="input-slug"
+            name="slug"
             maxlength="128"
+            required
             pattern="([a-z]|[A-Z]|[0-9]|[_]|[\-]){1,128}"
             value=""
           />
+          <span>Should only contain alphanumerics, '-' and '_' </span>
         </label>
 
+        <!-- URL Input -->
+        <!-- The pattern matches any string that does not begin with 'javascript:' -->
         <label>
-          URL
-          <input type="url" id="input-url" maxlength="256" value="" />
+          <p>URL</p>
+          <input
+            type="url"
+            name="href"
+            maxlength="256"
+            required
+            pattern="^(?!javascript:).*"
+            value=""
+          />
+          <span>
+            Should be a valid URL.
+            <code>javascript:</code>
+            is not allowed.
+          </span>
         </label>
 
         <button type="reset">Reset</button>
