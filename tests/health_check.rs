@@ -17,8 +17,8 @@ async fn health_check_works(pool: Pool<Sqlite>) -> anyhow::Result<()> {
         .context("Failed to execute request")?;
 
     // Assert
-    assert_eq!(response.status(), StatusCode::OK, "status code not 200");
-    assert_eq!(response.content_length(), Some(0), "content length not 0");
+    assert_eq!(response.status(), StatusCode::OK, "Status code isn't 200");
+    assert_eq!(response.content_length(), Some(0), "Content length isn't 0");
 
     Ok(())
 }
