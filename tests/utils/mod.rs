@@ -1,32 +1,8 @@
 use sqlx::{Pool, Sqlite};
-use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use url::Url;
 
-// The integration tests use `UrlHelper` to figure out the URL they need to send requests at,
-// since the test server runs on whatever port is available (assigned by the OS).
-
-pub struct UrlHelper {
-    base: Url,
-}
-
-impl UrlHelper {
-    pub fn path(&self, input: &str) -> anyhow::Result<Url> {
-        Ok(self.base.join(input)?)
-    }
-}
-
-impl TryFrom<SocketAddr> for UrlHelper {
-    type Error = anyhow::Error;
-
-    fn try_from(value: SocketAddr) -> anyhow::Result<Self> {
-        Ok(Self {
-            base: Url::parse(&format!("http://localhost:{}", value.port()))?,
-        })
-    }
-}
-
-pub async fn spawn_server(pool: Pool<Sqlite>) -> anyhow::Result<UrlHelper> {
+pub async fn spawn_server(pool: Pool<Sqlite>) -> anyhow::Result<Url> {
     // Init application
     let router = link_shortener::init(pool).await?;
 
@@ -40,5 +16,5 @@ pub async fn spawn_server(pool: Pool<Sqlite>) -> anyhow::Result<UrlHelper> {
         axum::serve(listener, router).await.unwrap();
     });
 
-    Ok(addr.try_into()?)
+    Ok(Url::parse(&format!("http://localhost:{}/", addr.port()))?)
 }
