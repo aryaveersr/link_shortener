@@ -1,5 +1,6 @@
 const SLUG_MAX_LENGTH: usize = 128;
 
+#[derive(Debug)]
 pub struct Slug(String);
 
 impl Slug {

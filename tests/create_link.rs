@@ -31,8 +31,8 @@ async fn create_link_returns_200_for_valid_data_and_stores_it(
         .await?;
 
     // # Assert
-    assert_eq!(response.status(), StatusCode::OK, "Status code isn't 200");
-    assert_eq!(record.href, HREF, "Record stored doesn't have same href");
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(record.href, HREF);
 
     Ok(())
 }
@@ -67,7 +67,7 @@ async fn create_link_returns_error_for_slug_already_used(pool: Pool<Sqlite>) -> 
         .context("Failed to execute request")?;
 
     // # Assert
-    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    assert_eq!(response.status(), StatusCode::CONFLICT);
 
     Ok(())
 }

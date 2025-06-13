@@ -11,8 +11,9 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Sqlite};
+use tracing::debug;
 use uuid::Uuid;
 
 #[derive(Deserialize, Debug)]
@@ -46,25 +47,44 @@ pub enum ResponseError {
 
 impl IntoResponse for ResponseError {
     fn into_response(self) -> Response {
-        match self {
-            Self::ValidationError(_) | Self::AlreadyExists => StatusCode::BAD_REQUEST,
-            Self::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        let (status_code, err) = match self {
+            Self::ValidationError(err) => (StatusCode::BAD_REQUEST, err),
+            Self::AlreadyExists => (StatusCode::CONFLICT, "Slug already exists".into()),
+            Self::UnexpectedError(_) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Internal server error".into(),
+            ),
+        };
+
+        #[derive(Serialize, Debug, Clone)]
+        struct ErrorBody {
+            code: u16,
+            err: String,
         }
-        .into_response()
+
+        let body = Json(ErrorBody {
+            code: status_code.as_u16(),
+            err,
+        });
+
+        (status_code, body).into_response()
     }
 }
 
+#[tracing::instrument(skip(pool))]
 pub async fn handler(
     State(AppState { pool }): State<AppState>,
     Json(request_data): Json<RequestData>,
 ) -> Result<StatusCode, ResponseError> {
+    debug!("Creating a new link entry");
+
     // Parse incoming request data.
     let link_entry: LinkEntry = request_data
         .try_into()
         .map_err(ResponseError::ValidationError)?;
 
     // Check if the slug already exists in the database.
-    if check_if_slug_exists(&pool, &link_entry.slug)
+    if check_if_slug_already_exists(&pool, &link_entry.slug)
         .await
         .context("Failed to check for slug in database")?
     {
@@ -79,7 +99,11 @@ pub async fn handler(
     Ok(StatusCode::OK)
 }
 
-async fn check_if_slug_exists(pool: &Pool<Sqlite>, slug: &Slug) -> Result<bool, sqlx::Error> {
+#[tracing::instrument(skip(pool))]
+async fn check_if_slug_already_exists(
+    pool: &Pool<Sqlite>,
+    slug: &Slug,
+) -> Result<bool, sqlx::Error> {
     let slug_ref = slug.as_ref();
 
     let record = sqlx::query!("SELECT * FROM links WHERE slug = $1;", slug_ref)
@@ -89,6 +113,7 @@ async fn check_if_slug_exists(pool: &Pool<Sqlite>, slug: &Slug) -> Result<bool, 
     Ok(record.is_some())
 }
 
+#[tracing::instrument(skip(pool))]
 async fn insert_link_entry(pool: &Pool<Sqlite>, link_entry: &LinkEntry) -> Result<(), sqlx::Error> {
     let id = Uuid::new_v4().to_string();
     let slug = link_entry.slug.as_ref();
