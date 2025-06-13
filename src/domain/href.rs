@@ -1,37 +1,36 @@
-use std::fmt::Display;
 use url::Url;
 
+const HREF_MAX_LENGTH: usize = 256;
+
+#[derive(Debug)]
 pub struct Href(Url);
 
 impl Href {
     pub fn parse(input: &str) -> Result<Self, String> {
         // We try parsing the input as is, and if it fails, try again after
-        // appending 'https://' at the start.
-        let url = {
-            let parse_as_is = Url::parse(input);
+        // prepending 'https://' at the start.
 
-            match parse_as_is {
-                Ok(url) => Ok(url),
-                Err(_) => Url::parse(&format!("https://{}", input)),
-            }
-        }
-        .map_err(|_| format!("{} is not a valid URL.", input))?;
+        let url = Url::parse(input)
+            .or_else(|_| Url::parse(&format!("https://{}", input)))
+            .map_err(|_| format!(r#""{}" is not a valid URL."#, input))?;
 
         if url.scheme() == "javascript" {
-            return Err(format!("{} is not an allowed href.", input));
+            return Err(r#""javascript:" is not allowed as the href."#.into());
         }
 
-        if url.to_string().len() > 256 {
-            return Err("Input is too long.".to_owned());
+        // The URL's .to_string() might be different because of an prepended `https://`, or a
+        // trailing `/`.
+        if url.to_string().len() > HREF_MAX_LENGTH {
+            return Err("Input is too long.".into());
         }
 
         Ok(Self(url))
     }
 }
 
-impl Display for Href {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
+impl AsRef<str> for Href {
+    fn as_ref(&self) -> &str {
+        self.0.as_str()
     }
 }
 
@@ -41,7 +40,7 @@ mod tests {
 
     #[test]
     fn href_parses_valid_strings() {
-        // Arrange
+        // # Arrange
         let test_cases = [
             "https://google.com",
             "github.com",
@@ -55,22 +54,22 @@ mod tests {
         ];
 
         for case in test_cases {
-            // Act
+            // # Act
             let href = Href::parse(case);
 
-            // Assert
+            // # Assert
             assert!(
                 href.is_ok(),
                 r#"Failed to parse valid string: "{}" with error: {}"#,
                 case,
-                href.err().unwrap()
+                href.unwrap_err()
             );
         }
     }
 
     #[test]
     fn href_does_not_parse_invalid_strings() {
-        // Arrange
+        // # Arrange
         let test_cases = [
             "javascript:alert('Hello, world!')",
             "hello world",
@@ -80,10 +79,10 @@ mod tests {
         ];
 
         for case in test_cases {
-            // Act
+            // # Act
             let href = Href::parse(case);
 
-            // Assert
+            // # Assert
             assert!(
                 href.is_err(),
                 r#"Parsed invalid string: "{}" as {}"#,
@@ -95,17 +94,17 @@ mod tests {
 
     #[test]
     fn href_does_not_parse_string_too_long() {
-        // Arrange
+        // # Arrange
         let string = "hello_world".repeat(40);
 
-        // Act
+        // # Act
         let href = Href::parse(&string);
 
-        // Assert
-        assert!(string.len() > 256);
+        // # Assert
+        assert!(string.len() > HREF_MAX_LENGTH);
         assert!(
             href.is_err(),
-            r#"Parsed string with length {}"#,
+            r#"Parsed string with length: {}"#,
             string.len()
         );
     }

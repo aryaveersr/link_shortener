@@ -40,7 +40,7 @@ pub async fn handler(
     let parsed_slug = Slug::parse(slug).map_err(ResponseError::ValidationError)?;
     let link_entry = fetch_slug(&pool, parsed_slug).await?;
 
-    Ok(Redirect::temporary(&link_entry.href.to_string()))
+    Ok(Redirect::temporary(link_entry.href.as_ref()))
 }
 
 async fn fetch_slug(pool: &Pool<Sqlite>, slug: Slug) -> Result<LinkEntry, ResponseError> {

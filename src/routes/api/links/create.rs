@@ -92,7 +92,7 @@ async fn check_if_slug_exists(pool: &Pool<Sqlite>, slug: &Slug) -> Result<bool, 
 async fn insert_link_entry(pool: &Pool<Sqlite>, link_entry: &LinkEntry) -> Result<(), sqlx::Error> {
     let id = Uuid::new_v4().to_string();
     let slug = link_entry.slug.as_ref();
-    let href = link_entry.href.to_string();
+    let href = link_entry.href.as_ref();
 
     sqlx::query!(
         "INSERT INTO links (id, slug, href) VALUES ($1, $2, $3);",
