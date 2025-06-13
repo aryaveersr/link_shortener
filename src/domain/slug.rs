@@ -1,19 +1,21 @@
+const SLUG_MAX_LENGTH: usize = 128;
+
 pub struct Slug(String);
 
 impl Slug {
     pub fn parse(input: String) -> Result<Self, String> {
-        let is_too_long = input.len() > 128;
+        let is_too_long = input.len() > SLUG_MAX_LENGTH;
 
         let is_whitespace = input.trim().is_empty();
 
-        let contains_invalid_characters = input.chars().any(|c| match c {
-            'a'..='z' | 'A'..='Z' | '0'..='9' | '-' | '_' => false,
-            _ => true,
-        });
+        let contains_invalid_characters = !input
+            .chars()
+            .all(|c| matches!(c, 'a'..='z' | 'A'..='Z' | '0'..='9' | '-' | '_'));
 
-        match is_too_long || is_whitespace || contains_invalid_characters {
-            true => Err(format!("{} is not a valid slug.", input)),
-            false => Ok(Self(input)),
+        if is_too_long || is_whitespace || contains_invalid_characters {
+            Err(format!(r#""{}" is not a valid slug."#, input))
+        } else {
+            Ok(Self(input))
         }
     }
 }
@@ -30,18 +32,17 @@ mod tests {
 
     #[test]
     fn slug_parses_valid_strings() {
-        // Arrange
+        // # Arrange
         let test_cases = ["testing", "valid-slug", "ANOTHER_VALID_SLUG", "abc123"];
 
         for case in test_cases {
-            // Act
+            // # Act
             let slug = Slug::parse(case.to_owned());
 
-            // Assert
+            // # Assert
             assert!(
                 slug.is_ok(),
-                r#"Failed to parse valid string: "{}" with error: {}"#,
-                case,
+                r#"Failed to parse valid string: "{case}" with error: {}"#,
                 slug.err().unwrap()
             );
         }
@@ -49,7 +50,7 @@ mod tests {
 
     #[test]
     fn slug_does_not_parse_invalid_strings() {
-        // Arrange
+        // # Arrange
         let test_cases = [
             "testing/slugs",
             "hello/there/how",
@@ -61,28 +62,25 @@ mod tests {
         ];
 
         for case in test_cases {
-            // Act
+            // # Act
             let slug = Slug::parse(case.to_owned());
 
-            // Assert
-            assert!(slug.is_err(), r#"Parsed invalid string: "{}""#, case,);
+            // # Assert
+            assert!(slug.is_err(), r#"Parsed invalid string: "{case}""#);
         }
     }
 
     #[test]
     fn slug_does_not_parse_string_too_long() {
-        // Arrange
+        // # Arrange
         let string = "hello_world".repeat(20);
+        let len = string.len();
 
-        // Act
+        // # Act
         let slug = Slug::parse(string.clone());
 
-        // Assert
-        assert!(string.len() > 128);
-        assert!(
-            slug.is_err(),
-            r#"Parsed string with length {}"#,
-            string.len()
-        );
+        // # Assert
+        assert!(len > SLUG_MAX_LENGTH);
+        assert!(slug.is_err(), r#"Parsed string with length {len}"#,);
     }
 }

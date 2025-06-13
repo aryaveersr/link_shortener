@@ -8,23 +8,22 @@ pub struct Href(Url);
 impl Href {
     pub fn parse(input: &str) -> Result<Self, String> {
         // We try parsing the input as is, and if it fails, try again after
-        // prepending 'https://' at the start.
-
+        // prepending `https://`` at the start.
         let url = Url::parse(input)
             .or_else(|_| Url::parse(&format!("https://{}", input)))
-            .map_err(|_| format!(r#""{}" is not a valid URL."#, input))?;
+            .map_err(|_| format!(r#""{}" is not a valid href."#, input))?;
 
-        if url.scheme() == "javascript" {
-            return Err(r#""javascript:" is not allowed as the href."#.into());
+        // The URL's .to_string() might be different because of an prepended `https://`,
+        // or a trailing `/`.
+        let is_too_long = url.to_string().len() > HREF_MAX_LENGTH;
+
+        let is_javascript = url.scheme() == "javascript";
+
+        if is_too_long || is_javascript {
+            Err(format!(r#""{}" is not a valid href."#, input))
+        } else {
+            Ok(Self(url))
         }
-
-        // The URL's .to_string() might be different because of an prepended `https://`, or a
-        // trailing `/`.
-        if url.to_string().len() > HREF_MAX_LENGTH {
-            return Err("Input is too long.".into());
-        }
-
-        Ok(Self(url))
     }
 }
 
@@ -60,8 +59,7 @@ mod tests {
             // # Assert
             assert!(
                 href.is_ok(),
-                r#"Failed to parse valid string: "{}" with error: {}"#,
-                case,
+                r#"Failed to parse valid string: "{case}" with error: {}"#,
                 href.unwrap_err()
             );
         }
@@ -83,12 +81,7 @@ mod tests {
             let href = Href::parse(case);
 
             // # Assert
-            assert!(
-                href.is_err(),
-                r#"Parsed invalid string: "{}" as {}"#,
-                case,
-                href.unwrap().0
-            );
+            assert!(href.is_err(), r#"Parsed invalid string: "{case}""#,);
         }
     }
 
@@ -96,16 +89,13 @@ mod tests {
     fn href_does_not_parse_string_too_long() {
         // # Arrange
         let string = "hello_world".repeat(40);
+        let len = string.len();
 
         // # Act
         let href = Href::parse(&string);
 
         // # Assert
-        assert!(string.len() > HREF_MAX_LENGTH);
-        assert!(
-            href.is_err(),
-            r#"Parsed string with length: {}"#,
-            string.len()
-        );
+        assert!(len > HREF_MAX_LENGTH);
+        assert!(href.is_err(), r#"Parsed string with length: {len}"#);
     }
 }

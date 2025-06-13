@@ -10,8 +10,8 @@ async fn create_link_returns_200_for_valid_data_and_stores_it(
     pool: Pool<Sqlite>,
 ) -> anyhow::Result<()> {
     // # Arrange
-    const SLUG: &'static str = "shortened-link";
-    const HREF: &'static str = "https://google.com/";
+    const SLUG: &str = "shortened-link";
+    const HREF: &str = "https://google.com/";
 
     let url = utils::spawn_server(pool.clone()).await?;
 
@@ -40,7 +40,7 @@ async fn create_link_returns_200_for_valid_data_and_stores_it(
 #[sqlx::test]
 async fn create_link_returns_error_for_slug_already_used(pool: Pool<Sqlite>) -> anyhow::Result<()> {
     // # Arrange
-    const SLUG: &'static str = "shortened-link";
+    const SLUG: &str = "shortened-link";
 
     let url = utils::spawn_server(pool.clone()).await?;
     let client = Client::new();

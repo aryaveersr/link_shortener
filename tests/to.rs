@@ -8,8 +8,8 @@ use sqlx::{Pool, Sqlite};
 #[sqlx::test]
 async fn to_redirects_to_href_for_valid_slug(pool: Pool<Sqlite>) -> anyhow::Result<()> {
     // # Arrange
-    const SLUG: &'static str = "shortened-link";
-    const HREF: &'static str = "https://google.com/";
+    const SLUG: &str = "shortened-link";
+    const HREF: &str = "https://google.com/";
 
     // Set redirect policy to none since we want to assert that they happen.
     let client = Client::builder().redirect(Policy::none()).build()?;
