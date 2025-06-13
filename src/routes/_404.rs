@@ -20,7 +20,7 @@ pub async fn handler(request: Request) -> Response {
     debug!(path, "Rendering 404.html");
 
     match template.render() {
-        Ok(html) => Html(html).into_response(),
+        Ok(html) => (StatusCode::NOT_FOUND, Html(html)).into_response(),
         Err(err) => {
             error!(?err, "Template rendering failed");
 

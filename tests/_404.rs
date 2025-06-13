@@ -28,8 +28,8 @@ async fn _404_template_returned_for_invalid_path(pool: Pool<Sqlite>) -> anyhow::
         // # Assert
         debug!(r#"Asserting for case: "{case}""#);
 
-        assert!(response.content_length().unwrap() > 0);
         assert_eq!(response.status(), StatusCode::NOT_FOUND);
+        assert!(response.content_length().unwrap() > 0);
 
         let content_type = response
             .headers()

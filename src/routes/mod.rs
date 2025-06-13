@@ -14,5 +14,5 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/to/{slug}", get(to::handler))
         .nest("/api", api::routes())
-        .fallback_service(serve_dir.not_found_service(_404::handler.into_service()))
+        .fallback_service(serve_dir.fallback(_404::handler.into_service()))
 }
