@@ -11,6 +11,9 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 axum = "0.8"
 tower-http = { version = "0.6", features = ["fs"] }
 
+# Templates
+askama = "0.14"
+
 # Serde
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -29,7 +32,7 @@ tracing-subscriber = "0.3"
 anyhow = "1.0"
 thiserror = "2.0"
 
-# UUID (assigning ids in database)
+# UUID
 uuid = { version = "1.17", features = ["v4"] }
 
 # Database

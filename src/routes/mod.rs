@@ -1,8 +1,9 @@
+mod _404;
 mod api;
 mod to;
 
 use crate::AppState;
-use axum::{Router, routing::get};
+use axum::{Router, handler::HandlerWithoutStateExt, routing::get};
 use tower_http::services::ServeDir;
 
 pub fn routes() -> Router<AppState> {
@@ -13,5 +14,5 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/to/{slug}", get(to::handler))
         .nest("/api", api::routes())
-        .fallback_service(serve_dir)
+        .fallback_service(serve_dir.not_found_service(_404::handler.into_service()))
 }
