@@ -8,8 +8,8 @@ use tracing::{debug, error};
 
 #[derive(Template)]
 #[template(path = "404.html")]
-struct HtmlTemplate {
-    path: String,
+pub struct HtmlTemplate {
+    pub path: String,
 }
 
 #[tracing::instrument]
