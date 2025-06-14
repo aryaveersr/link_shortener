@@ -17,7 +17,11 @@
   <body>
     <main>
       <h1>404: Not Found</h1>
-      <p>There's nothing at {{ path }}</p>
+      <p>There's nothing at <code></code></p>
     </main>
+
+    <script>
+      document.querySelector("code").innerHTML = window.location.pathname;
+    </script>
   </body>
 </html>
