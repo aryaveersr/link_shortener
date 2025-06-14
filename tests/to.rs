@@ -6,7 +6,7 @@ use serde_json::json;
 use sqlx::{Pool, Sqlite};
 
 #[sqlx::test]
-async fn to_redirects_to_href_for_valid_slug(pool: Pool<Sqlite>) -> anyhow::Result<()> {
+async fn to_redirects_to_href_for_slug_that_exists(pool: Pool<Sqlite>) -> anyhow::Result<()> {
     // # Arrange
     const SLUG: &str = "shortened-link";
     const HREF: &str = "https://google.com/";
@@ -39,7 +39,7 @@ async fn to_redirects_to_href_for_valid_slug(pool: Pool<Sqlite>) -> anyhow::Resu
 }
 
 #[sqlx::test]
-async fn to_returns_404_for_invalid_slug(pool: Pool<Sqlite>) -> anyhow::Result<()> {
+async fn to_returns_404_for_slug_that_does_not_exist(pool: Pool<Sqlite>) -> anyhow::Result<()> {
     // # Arrange
     let url = utils::spawn_server(pool).await?;
 

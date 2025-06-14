@@ -17,15 +17,15 @@ use tracing::debug;
 use uuid::Uuid;
 
 #[derive(Deserialize, Debug)]
-pub struct RequestData {
+pub struct RequestBody {
     slug: String,
     href: String,
 }
 
-impl TryFrom<RequestData> for LinkEntry {
+impl TryFrom<RequestBody> for LinkEntry {
     type Error = String;
 
-    fn try_from(value: RequestData) -> Result<Self, Self::Error> {
+    fn try_from(value: RequestBody) -> Result<Self, Self::Error> {
         let href = Href::parse(&value.href)?;
         let slug = Slug::parse(value.slug)?;
 
@@ -74,17 +74,17 @@ impl IntoResponse for ResponseError {
 #[tracing::instrument(skip(pool))]
 pub async fn handler(
     State(AppState { pool }): State<AppState>,
-    Json(request_data): Json<RequestData>,
+    Json(request_body): Json<RequestBody>,
 ) -> Result<StatusCode, ResponseError> {
     debug!("Creating a new link entry");
 
-    // Parse incoming request data.
-    let link_entry: LinkEntry = request_data
+    // Parse incoming request body.
+    let link_entry: LinkEntry = request_body
         .try_into()
         .map_err(ResponseError::ValidationError)?;
 
     // Check if the slug already exists in the database.
-    if check_if_slug_already_exists(&pool, &link_entry.slug)
+    if super::check_if_slug_already_exists(&pool, &link_entry.slug)
         .await
         .context("Failed to check for slug in database")?
     {
@@ -97,20 +97,6 @@ pub async fn handler(
         .context("Failed to insert the link entry")?;
 
     Ok(StatusCode::OK)
-}
-
-#[tracing::instrument(skip(pool))]
-async fn check_if_slug_already_exists(
-    pool: &Pool<Sqlite>,
-    slug: &Slug,
-) -> Result<bool, sqlx::Error> {
-    let slug_ref = slug.as_ref();
-
-    let record = sqlx::query!("SELECT * FROM links WHERE slug = $1;", slug_ref)
-        .fetch_optional(pool)
-        .await?;
-
-    Ok(record.is_some())
 }
 
 #[tracing::instrument(skip(pool))]
