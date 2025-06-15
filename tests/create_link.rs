@@ -2,6 +2,7 @@ mod utils;
 
 use anyhow::Context;
 use reqwest::{Client, StatusCode};
+use serde::Deserialize;
 use serde_json::json;
 use sqlx::{Pool, Sqlite};
 
@@ -33,6 +34,15 @@ async fn create_link_returns_200_for_valid_data_and_stores_it(
     // # Assert
     assert_eq!(response.status(), StatusCode::OK);
     assert_eq!(record.href, HREF);
+
+    #[derive(Deserialize)]
+    struct ResponseBody {
+        code: u32,
+    }
+
+    let body: ResponseBody = response.json().await?;
+
+    assert_eq!(record.code, body.code as i64);
 
     Ok(())
 }

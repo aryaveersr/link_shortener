@@ -1,8 +1,6 @@
-//! POST /api/links/create
-
 use crate::{
     AppState,
-    domain::{Href, LinkEntry, Slug},
+    domain::{Code, Href, LinkEntry, Slug},
 };
 use anyhow::Context;
 use axum::{
@@ -28,8 +26,9 @@ impl TryFrom<RequestBody> for LinkEntry {
     fn try_from(value: RequestBody) -> Result<Self, Self::Error> {
         let href = Href::parse(&value.href)?;
         let slug = Slug::parse(value.slug)?;
+        let code = Code::generate();
 
-        Ok(Self { href, slug })
+        Ok(Self { href, slug, code })
     }
 }
 
@@ -58,12 +57,12 @@ impl IntoResponse for ResponseError {
 
         #[derive(Serialize, Debug, Clone)]
         struct ErrorBody {
-            code: u16,
+            err_code: u16,
             err: String,
         }
 
         let body = Json(ErrorBody {
-            code: status_code.as_u16(),
+            err_code: status_code.as_u16(),
             err,
         });
 
@@ -71,11 +70,16 @@ impl IntoResponse for ResponseError {
     }
 }
 
+#[derive(Serialize)]
+pub struct ResponseBody {
+    code: u32,
+}
+
 #[tracing::instrument(skip(pool))]
 pub async fn handler(
     State(AppState { pool }): State<AppState>,
     Json(request_body): Json<RequestBody>,
-) -> Result<StatusCode, ResponseError> {
+) -> Result<Json<ResponseBody>, ResponseError> {
     debug!("Creating a new link entry");
 
     // Parse incoming request body.
@@ -96,7 +100,9 @@ pub async fn handler(
         .await
         .context("Failed to insert the link entry")?;
 
-    Ok(StatusCode::OK)
+    Ok(Json(ResponseBody {
+        code: link_entry.code.as_u32(),
+    }))
 }
 
 #[tracing::instrument(skip(pool))]
@@ -104,12 +110,14 @@ async fn insert_link_entry(pool: &Pool<Sqlite>, link_entry: &LinkEntry) -> Resul
     let id = Uuid::new_v4().to_string();
     let slug = link_entry.slug.as_ref();
     let href = link_entry.href.as_ref();
+    let code = link_entry.code.as_u32();
 
     sqlx::query!(
-        "INSERT INTO links (id, slug, href) VALUES ($1, $2, $3);",
+        "INSERT INTO links (id, slug, href, code) VALUES ($1, $2, $3, $4);",
         id,
         slug,
-        href
+        href,
+        code
     )
     .execute(pool)
     .await?;
