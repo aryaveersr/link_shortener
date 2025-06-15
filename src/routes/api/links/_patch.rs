@@ -12,11 +12,12 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Sqlite};
 use tracing::debug;
-use uuid::Uuid;
 
 #[derive(Deserialize, Debug)]
 pub struct RequestBody {
     slug: String,
+    code: u32,
+    // The new href
     href: String,
 }
 
@@ -26,7 +27,7 @@ impl TryFrom<RequestBody> for LinkEntry {
     fn try_from(value: RequestBody) -> Result<Self, Self::Error> {
         let href = Href::parse(&value.href)?;
         let slug = Slug::parse(value.slug)?;
-        let code = Code::generate();
+        let code = Code::parse(value.code)?;
 
         Ok(Self { href, slug, code })
     }
@@ -36,9 +37,6 @@ impl TryFrom<RequestBody> for LinkEntry {
 pub enum ResponseError {
     #[error("{0}")]
     ValidationError(String),
-
-    #[error("Requested slug already exists")]
-    AlreadyExists,
 
     #[error(transparent)]
     UnexpectedError(#[from] anyhow::Error),
@@ -52,7 +50,6 @@ impl IntoResponse for ResponseError {
         }
 
         match self {
-            Self::AlreadyExists => StatusCode::CONFLICT.into_response(),
             Self::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
             Self::ValidationError(err) => {
                 (StatusCode::BAD_REQUEST, Json(ErrorBody { err })).into_response()
@@ -61,57 +58,50 @@ impl IntoResponse for ResponseError {
     }
 }
 
-#[derive(Serialize)]
-pub struct ResponseBody {
-    code: u32,
-}
-
 #[tracing::instrument(skip(pool))]
 pub async fn handler(
     State(AppState { pool }): State<AppState>,
     Json(request_body): Json<RequestBody>,
-) -> Result<Json<ResponseBody>, ResponseError> {
-    debug!("Creating a new link entry");
+) -> Result<StatusCode, ResponseError> {
+    debug!("Updating a link entry");
 
     // Parse incoming request body.
     let link_entry: LinkEntry = request_body
         .try_into()
         .map_err(ResponseError::ValidationError)?;
 
-    // Check if the slug already exists in the database.
-    if super::_get::check_if_slug_already_exists(&pool, &link_entry.slug)
+    // Update the link entry in the database.
+    let entry_existed = update_link_entry(&pool, &link_entry)
         .await
-        .context("Failed to check for slug in database")?
-    {
-        return Err(ResponseError::AlreadyExists);
+        .context("Failed to update the link entry")?;
+
+    if entry_existed {
+        Ok(StatusCode::OK)
+    } else {
+        Err(ResponseError::ValidationError(
+            "Slug or code incorrect".into(),
+        ))
     }
-
-    // Insert the link entry into database.
-    insert_link_entry(&pool, &link_entry)
-        .await
-        .context("Failed to insert the link entry")?;
-
-    Ok(Json(ResponseBody {
-        code: link_entry.code.as_u32(),
-    }))
 }
 
 #[tracing::instrument(skip(pool))]
-async fn insert_link_entry(pool: &Pool<Sqlite>, link_entry: &LinkEntry) -> Result<(), sqlx::Error> {
-    let id = Uuid::new_v4().to_string();
+async fn update_link_entry(
+    pool: &Pool<Sqlite>,
+    link_entry: &LinkEntry,
+) -> Result<bool, sqlx::Error> {
     let slug = link_entry.slug.as_ref();
     let href = link_entry.href.as_ref();
     let code = link_entry.code.as_u32();
 
-    sqlx::query!(
-        "INSERT INTO links (id, slug, href, code) VALUES ($1, $2, $3, $4);",
-        id,
-        slug,
+    let rows_affected = sqlx::query!(
+        "UPDATE links SET href = $1 WHERE slug = $2 AND code = $3;",
         href,
+        slug,
         code
     )
     .execute(pool)
-    .await?;
+    .await?
+    .rows_affected();
 
-    Ok(())
+    Ok(rows_affected != 0)
 }
