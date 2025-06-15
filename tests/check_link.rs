@@ -7,7 +7,7 @@ use serde_json::json;
 use sqlx::{Pool, Sqlite};
 
 #[sqlx::test]
-async fn check_returns_true_for_slug_that_exists(pool: Pool<Sqlite>) -> anyhow::Result<()> {
+async fn get_returns_true_for_slug_that_exists(pool: Pool<Sqlite>) -> anyhow::Result<()> {
     // # Arrange
     const SLUG: &str = "shortened-link";
 
@@ -17,15 +17,14 @@ async fn check_returns_true_for_slug_that_exists(pool: Pool<Sqlite>) -> anyhow::
     // # Act
     // Create a new link
     client
-        .post(url.join("/api/links/create")?)
+        .post(url.join("/api/links")?)
         .json(&json!({"slug": SLUG, "href": "https://google.com/"}))
         .send()
         .await
         .context("Failed to execute request")?;
 
-    // Send a POST request to the endpoint
     let response = client
-        .post(url.join("/api/links/check")?)
+        .get(url.join("/api/links")?)
         .json(&json!({"slug": SLUG}))
         .send()
         .await
@@ -47,15 +46,13 @@ async fn check_returns_true_for_slug_that_exists(pool: Pool<Sqlite>) -> anyhow::
 }
 
 #[sqlx::test]
-async fn check_returns_false_for_slug_that_does_not_exist(
-    pool: Pool<Sqlite>,
-) -> anyhow::Result<()> {
+async fn get_returns_false_for_slug_that_does_not_exist(pool: Pool<Sqlite>) -> anyhow::Result<()> {
     // # Arrange
     let url = utils::spawn_server(pool).await?;
 
     // # Act
     let response = Client::new()
-        .post(url.join("/api/links/check")?)
+        .get(url.join("/api/links")?)
         .json(&json!({"slug": "shortened-link"}))
         .send()
         .await

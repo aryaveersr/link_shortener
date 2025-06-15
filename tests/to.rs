@@ -18,7 +18,7 @@ async fn to_redirects_to_href_for_slug_that_exists(pool: Pool<Sqlite>) -> anyhow
     // # Act
     // Create a new link
     client
-        .post(url.join("/api/links/create")?)
+        .post(url.join("/api/links")?)
         .json(&json!({"slug": SLUG, "href": HREF}))
         .send()
         .await

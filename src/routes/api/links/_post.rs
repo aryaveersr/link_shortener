@@ -88,7 +88,7 @@ pub async fn handler(
         .map_err(ResponseError::ValidationError)?;
 
     // Check if the slug already exists in the database.
-    if super::check_if_slug_already_exists(&pool, &link_entry.slug)
+    if super::_get::check_if_slug_already_exists(&pool, &link_entry.slug)
         .await
         .context("Failed to check for slug in database")?
     {

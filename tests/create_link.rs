@@ -7,9 +7,7 @@ use serde_json::json;
 use sqlx::{Pool, Sqlite};
 
 #[sqlx::test]
-async fn create_link_returns_200_for_valid_data_and_stores_it(
-    pool: Pool<Sqlite>,
-) -> anyhow::Result<()> {
+async fn post_returns_200_for_valid_data_and_stores_it(pool: Pool<Sqlite>) -> anyhow::Result<()> {
     // # Arrange
     const SLUG: &str = "shortened-link";
     const HREF: &str = "https://google.com/";
@@ -18,7 +16,7 @@ async fn create_link_returns_200_for_valid_data_and_stores_it(
 
     // # Act
     let response = Client::new()
-        .post(url.join("/api/links/create")?)
+        .post(url.join("/api/links")?)
         .json(&json!({
             "slug": SLUG,
             "href": HREF
@@ -48,7 +46,7 @@ async fn create_link_returns_200_for_valid_data_and_stores_it(
 }
 
 #[sqlx::test]
-async fn create_link_returns_error_for_slug_already_used(pool: Pool<Sqlite>) -> anyhow::Result<()> {
+async fn post_returns_error_for_slug_already_used(pool: Pool<Sqlite>) -> anyhow::Result<()> {
     // # Arrange
     const SLUG: &str = "shortened-link";
 
@@ -57,7 +55,7 @@ async fn create_link_returns_error_for_slug_already_used(pool: Pool<Sqlite>) -> 
 
     // # Act
     client
-        .post(url.join("/api/links/create")?)
+        .post(url.join("/api/links")?)
         .json(&json!({
             "slug": SLUG,
             "href": "https://google.com"
@@ -67,7 +65,7 @@ async fn create_link_returns_error_for_slug_already_used(pool: Pool<Sqlite>) -> 
         .context("Failed to execute request")?;
 
     let response = client
-        .post(url.join("/api/links/create")?)
+        .post(url.join("/api/links")?)
         .json(&json!({
             "slug": SLUG,
             "href": "https://github.com"
@@ -83,7 +81,7 @@ async fn create_link_returns_error_for_slug_already_used(pool: Pool<Sqlite>) -> 
 }
 
 #[sqlx::test]
-async fn create_link_returns_error_for_invalid_data(pool: Pool<Sqlite>) -> anyhow::Result<()> {
+async fn post_returns_error_for_invalid_data(pool: Pool<Sqlite>) -> anyhow::Result<()> {
     // # Arrange
     let url = utils::spawn_server(pool).await?;
     let client = Client::new();
@@ -102,7 +100,7 @@ async fn create_link_returns_error_for_invalid_data(pool: Pool<Sqlite>) -> anyho
     for json in test_cases {
         // # Act
         let response = client
-            .post(url.join("/api/links/create")?)
+            .post(url.join("/api/links")?)
             .json(&json)
             .send()
             .await

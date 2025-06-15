@@ -1,13 +1,9 @@
-mod check;
-mod create;
-
-pub(self) use check::check_if_slug_already_exists;
+pub(self) mod _get;
+mod _post;
 
 use crate::AppState;
-use axum::{Router, routing::post};
+use axum::routing::{MethodRouter, get};
 
-pub fn routes() -> Router<AppState> {
-    Router::new()
-        .route("/create", post(create::handler))
-        .route("/check", post(check::handler))
+pub fn method_routes() -> MethodRouter<AppState> {
+    get(_get::handler).post(_post::handler)
 }

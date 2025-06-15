@@ -5,9 +5,9 @@ form.addEventListener("submit", async (ev) => {
 
   let data = Object.fromEntries(new FormData(form));
 
-  console.log("Sending POST /api/links/create with: ", data);
+  console.log("Sending POST /api/links with: ", data);
 
-  let response = await fetch("/api/links/create", {
+  let response = await fetch("/api/links", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -19,12 +19,12 @@ form.addEventListener("submit", async (ev) => {
 
   if (response.status != 200) {
     console.error(
-      "POST /api/links/create returned",
+      "POST /api/links returned",
       response.status,
       response.statusText,
       body
     );
   } else {
-    console.log("POST /api/links/create returned 200 (OK).");
+    console.log("POST /api/links returned 200 (OK).");
   }
 });
