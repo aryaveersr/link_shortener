@@ -13,13 +13,13 @@
     <link rel="stylesheet" href="/css/index.css" />
 
     <!-- Scripts -->
-    <script type="module" src="/js/index.mjs"></script>
+    <script type="module" src="/js/edit.mjs"></script>
 
-    <title>Link Shortener</title>
+    <title>Edit link | Link Shortener</title>
   </head>
   <body>
     <main>
-      <h1>Shorten URLs</h1>
+      <h1>Edit Existing Link</h1>
 
       <form>
         <!-- Slug input -->
@@ -37,10 +37,25 @@
           <span>Should only contain alphanumerics, '-' and '_' </span>
         </label>
 
+        <!-- Edit code input -->
+        <!-- Should be not more than 8 digits (<=9999_9999) -->
+        <label>
+          <p>Code</p>
+          <input
+            type="number"
+            name="code"
+            max="99999999"
+            min="0"
+            required
+            value=""
+          />
+          <span>Should be not more than 8 digits</span>
+        </label>
+
         <!-- URL Input -->
         <!-- The pattern matches any string that does not begin with 'javascript:' -->
         <label>
-          <p>URL</p>
+          <p>New URL</p>
           <input
             type="url"
             name="href"
@@ -56,11 +71,24 @@
           </span>
         </label>
 
-        <button type="reset">Reset</button>
-        <button type="submit">Create</button>
+        <button type="button">Delete</button>
+        <button type="submit">Edit</button>
       </form>
 
-      <a href="/edit.html">Want to edit an existing link?</a>
+      <a href="/">Want to create a new link?</a>
     </main>
+
+    <style>
+      /* Delete button */
+      button[type="button"] {
+        border-color: #ef4444;
+        background-color: transparent;
+      }
+
+      button[type="button"]:hover {
+        background-color: #ef4444;
+        color: white;
+      }
+    </style>
   </body>
 </html>
