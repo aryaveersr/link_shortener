@@ -1,3 +1,4 @@
+mod _delete;
 pub(self) mod _get;
 mod _patch;
 mod _post;
@@ -10,4 +11,5 @@ pub fn method_routes() -> MethodRouter<AppState> {
         .get(_get::handler)
         .post(_post::handler)
         .patch(_patch::handler)
+        .delete(_delete::handler)
 }
